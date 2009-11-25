@@ -87,7 +87,7 @@ __PACKAGE__->meta->make_immutable;
 
 __END__;
 
-=head1 NAME Cantella::Store::UUID
+=head1 NAME Cantella::Store::UUID - UUID based file storage
 
 =head1 DESCRIPTION
 

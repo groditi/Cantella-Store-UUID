@@ -3,7 +3,9 @@ use warnings;
 use inc::Module::Install 0.91;
 
 name 'Cantella-Store-UUID';
+license 'perl';
 all_from 'lib/Cantella/Store/UUID.pm';
+
 
 requires 'JSON';
 requires 'Moose';
