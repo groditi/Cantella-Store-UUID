@@ -1,4 +1,6 @@
-use inc::Module::Install;
+use strict;
+use warnings;
+use inc::Module::Install 0.91;
 
 name 'Cantella-Store-UUID';
 all_from 'lib/Cantella/Store/UUID.pm';
@@ -15,8 +17,13 @@ requires 'MooseX::Types::Path::Class';
 requires 'MooseX::Types::Data::GUID';
 
 #tests
-requires 'FindBin';
-requires 'Test::More';
-requires 'Test::Exception';
+test_requires 'FindBin';
+test_requires 'Test::More';
+test_requires 'Test::Exception';
+
+resources(
+  'license', => 'http://dev.perl.org/licenses/',
+  'repository', => 'http://github.com/groditi/Cantella-Store-UUID',
+);
 
 WriteAll;
