@@ -1,2 +1,7 @@
+0.002000
+ - INCOMPATIBLE CHANGE: renamed 'set_metadata' to 'metadata'
+ - Added grep_files and map_files methods (were blocked by Path::Class bug)
+ - Updated tests to use Test::Manifest instead of numbered tests.
+ - Updated POD
 0.001000 2009-11-25
   - Initial Release

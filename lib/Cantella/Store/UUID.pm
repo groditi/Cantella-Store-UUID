@@ -1,6 +1,7 @@
 package Cantella::Store::UUID;
 
 use Moose;
+use Try::Tiny;
 use Data::GUID;
 use File::Copy qw();
 use Path::Class qw();
@@ -9,7 +10,7 @@ use MooseX::Types::Path::Class qw/Dir/;
 
 use namespace::autoclean;
 
-our $VERSION = '0.001000';
+our $VERSION = '0.002000';
 
 has nest_levels => (
   is => 'ro',
@@ -54,7 +55,7 @@ sub create_file {
   $meta{original_name} = $source_file->basename;
 
   my $new_file = $self->from_uuid( $uuid );
-  $new_file->set_metadata( \%meta );
+  $new_file->metadata( \%meta );
   return $new_file if File::Copy::copy($source_file, $new_file->path);
 
   my $new_path = $new_file->path;
@@ -81,13 +82,58 @@ sub _get_dir_for_uuid {
   return $target->subdir( @dirs );
 }
 
+sub grep_files {
+  my($self, $test) = @_;
+  my @result;
+
+  my $callback = sub {
+    my $node = shift;
+    return if $node->is_dir;
+    return unless $node->basename =~ /^[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}$/;
+    my $uuid;
+    try {
+      $uuid = Data::GUID->from_string($node->basename);
+    } catch {
+      warn("Invalid object in file storage at: ${node}");
+    };
+    push(@result, $uuid) if $test->( $self->from_uuid($uuid) );
+  };
+
+  $self->root_dir->recurse(callback => $callback, depthfirst => 1, preorder => 0);
+  return @result;
+}
+
+sub map_files {
+  my($self, $block) = @_;
+  my @result;
+
+  my $callback = sub {
+    my $node = shift;
+    return if $node->is_dir;
+    return unless $node->basename =~ /^[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}$/;
+    my $uuid;
+    try {
+      $uuid = Data::GUID->from_string($node->basename);
+    } catch {
+      warn("Invalid object in file storage at: ${node}");
+    };
+    push(@result, $block->( $self->from_uuid($uuid) ));
+  };
+
+  $self->root_dir->recurse(callback => $callback, depthfirst => 1, preorder => 0);
+  return @result;
+}
+
+
 __PACKAGE__->meta->make_immutable;
 
 1;
 
 __END__;
 
-=head1 NAME Cantella::Store::UUID - UUID based file storage
+=head1 NAME
+
+Cantella::Store::UUID - UUID based file storage
 
 =head1 DESCRIPTION
 
@@ -115,6 +161,32 @@ any number larger than 4 is cautioned against.
 
 =head1 SYNOPSYS
 
+    use Path::Class qw(file);
+    use Cantella::Store::UUID;
+
+    my $store = Cantella::Store::UUID->new(
+      root_dir => './test-cantella-store-uuid',
+      nest_levels => 3,
+    );
+    $store->deploy; #create the storage dirs (should only be done once)
+
+    my $new_uuid = $store->new_uuid;
+    {
+      my $source_file = file './some-file';
+      my $stored_file = $store->create_file($source_file, $new_uuid, {foo => 'bar'});
+      $source_file->remove; #it was copied into the storage
+    }
+
+    #this object is identical to the one returned by ->create_file
+    my $stored_file = $store->from_uuid($new_uuid);
+    print $stored_file->metadata->{foo}; #prints 'bar'
+
+    # $grep_results[0] eq $new_uuid#
+    my @grep_results = $store->grep_files(sub { exists shift->metadata->{foo}});
+
+    # $map_results[0] eq 'bar'
+    my @map_results = $store->grep_files(sub { $_->metadata->{foo}});
+
 =head1 ATTRIBUTES
 
 C<Cantella::Store::UUID> is a subclass of L<Moose::Object>. It inherits the
@@ -126,29 +198,85 @@ constructor method, or their respecitive writer method, if applicable.
 Required, read-only integer representing how many levels of depth to use in
 the directory structure.
 
+The following methods are associated with this attribute:
+
+=over 4
+
+=item B<nest_levels> - reader
+
+=back
+
 =head2 root_dir
+
+=over 4
+
+=item B<root_dir> - reader
+
+=back
 
 Required, read-only directory location for the root of the hierarchy.
 
 =head2 file_class
+
+=over 4
+
+=item B<file_class> - reader
+
+=back
 
 Required, read-only class name. The class to use for stored file objects.
 Defaults to L<Cantella::Store::UUID::File>.
 
 =head1 METHODS
 
+=head2 new
+
+=over 4
+
+=item B<arguments:> C<\%arguments>
+
+=item B<return value:> C<$object_instance>
+
+=back
+
+Constructor.
+
 =head2 from_uuid $uuid
 
-Return the apropriate file object for $uuid.
-Please note that this particular file does not neccesarily exist and its
-presence is not checked for.
+=over 4
+
+=item B<arguments:> C<$uuid>
+
+=item B<return value:> C<$file_object>
+
+=back
+
+Return the apropriate file object for C<$uuid>. Please note that this
+particular file does not neccesarily exist and its presence is not checked for.
+See L<exists|Cantella::Store::UUID::File/exists>.
 
 =head2 new_uuid
+
+=over 4
+
+=item B<arguments:> none
+
+=item B<return value:> C<$uuid>
+
+=back
 
 Returns a new UUID object suitable for use with this module. By default, it
 currently uses L<Data::GUID>.
 
-=head2 create_file $original, $uuid, $metadata
+=head2 create_file
+
+=over 4
+
+=item B<arguments:> C<$original, $uuid, $metadata>
+
+=item B<return value:> C<$file_object>
+
+=back
 
 Will copy the C<$original> file into the the UUID storage and return the
 file object representing it. The key C<original_name> will be automatically
@@ -156,14 +284,64 @@ set on the metadata with the base name of the original file.
 
 =head2 deploy
 
+=over 4
+
+=item B<arguments:> none
+
+=item B<return value:> none
+
+=back
+
 Create directory hierarchy, starting with C<root_dir>. A call to deploy may
 take a couple of minutes or even hours depending on the value of C<nest_levels>
 and the speed of the storage being utilized.
 
-=head2 _get_dir_for_uuid $uuid
+=head2 grep_files
 
-Given a UUID, it returns the apropriate directory as a L<Path::Class::Dir>
-object.
+=over 4
+
+=item B<arguments:> C<$code_ref>
+
+=item B<return value:> C<@matching_uuids>
+
+=back
+
+Recurse the storage testing every file against C<$code_ref>. Return all of the
+UUIDs where C<$code_ref> returns a true value. The only argument given to
+C<$code_ref> is a file object. The order in which files are tested and
+subsequently returned is undefined behavior and may change. Be aware that,
+depending on the number of @matching_ids and the number of documents stored,
+this method could take a very, very long time to finish and use considerable
+amounts of memory.
+
+=head2 map_files
+
+=over 4
+
+=item B<arguments:> C<$code_ref>
+
+=item B<return value:> C<@return_values>
+
+=back
+
+Recurse the storage executing C<$code_ref> on every file. Return all of the
+values returned by C<$code_ref>. The only argument given to C<$code_ref> is
+a file object. The order in which files are tested and subsequently returned
+is undefined behavior and may change. Be aware that, depending on the result
+values and number of documents stored, this method could take a very, very long
+time to finish and use considerable amounts of memory.
+
+=head2 _get_dir_for_uuid
+
+=over 4
+
+=item B<arguments:> C<$uuid>
+
+=item B<return value:> C<Path::Class::Dir $dir>
+
+=back
+
+Given a UUID, it returns the apropriate directory;
 
 =head1 SEE ALSO
 

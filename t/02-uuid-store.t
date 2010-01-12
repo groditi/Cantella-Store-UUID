@@ -13,10 +13,10 @@ use Cantella::Store::UUID;
 
 my $tmp = dir($Bin)->subdir('var')->subdir('docroot-test');
 if( -e $tmp){
-  plan tests => 16;
+  plan tests => 17;
   ok($tmp->rmtree, "setting up environment $!");
 } else {
-  plan tests => 15;
+  plan tests => 17;
 }
 
 ok($tmp->mkpath, "setting up environment $!");
@@ -51,16 +51,24 @@ lives_ok { $dr->deploy } 'deploy successful';
 my $meta = { foo => 'bar' };
 my $check_file;
 my $uuid = $dr->new_uuid;
+my $uuid2 = $dr->new_uuid;
 isa_ok($uuid, 'Data::GUID');
 lives_ok{
   $check_file = $dr->create_file($test_file, $uuid, $meta);
-} 'import call';
+  $dr->create_file($test_file, $uuid2, {foo => 'baz'});
+} 'create_file';
 
 is($check_file->path->slurp, $test_file->slurp, 'contents survived');
 is_deeply(
   $check_file->metadata,
   { foo => 'bar', original_name => 'test1.txt' },
 );
+
+my @grep_results = $dr->grep_files(sub { shift->metadata->{foo} eq 'baz' });
+is_deeply(\@grep_results, ["${uuid2}"], 'grep_files');
+
+my @map_results = $dr->map_files(sub { shift->metadata->{foo} });
+is_deeply([sort @map_results], [sort qw/bar baz/], 'map_files');
 
 ok($check_file->remove, 'removed cleanly');
 ok(! -e $check_file->path, 'file gone');

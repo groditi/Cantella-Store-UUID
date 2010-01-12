@@ -29,7 +29,9 @@ sub _mkdirs {
 
 __END__;
 
-=head1 NAME Cantella::Store::UUID::File
+=head1 NAME
+
+Cantella::Store::UUID::Util - Useful things that didn't belong in the objects
 
 =head1 SUBROUTINES
 

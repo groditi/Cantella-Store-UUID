@@ -6,7 +6,6 @@ name 'Cantella-Store-UUID';
 license 'perl';
 all_from 'lib/Cantella/Store/UUID.pm';
 
-
 requires 'JSON';
 requires 'Moose';
 requires 'Class::MOP';

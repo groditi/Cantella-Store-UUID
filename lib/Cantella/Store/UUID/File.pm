@@ -17,9 +17,8 @@ has path => (is => 'ro', isa => File, coerce => 1, lazy_build => 1);
 has _meta_file => (is => 'ro', isa => File, coerce => 1, lazy_build => 1);
 
 has metadata => (
+  is => 'rw',
   isa => 'HashRef',
-  reader => 'metadata',
-  writer => 'set_metadata',
   lazy_build => 1,
   trigger => sub { shift->write_metadata },
 );
@@ -86,7 +85,9 @@ __PACKAGE__->meta->make_immutable;
 
 __END__;
 
-=head1 NAME Cantella::Store::UUID::File
+=head1 NAME
+
+Cantella::Store::UUID::File - File represented by a UUID
 
 =head1 A NOTE ABOUT EXTENSIONS
 
@@ -104,39 +105,125 @@ constructor method, or their respecitive writer method, if applicable.
 
 =head2 uuid
 
+=over 4
+
+=item B<uuid> - reader
+
+=back
+
 Required, read-only L<Data::GUID> object, will automatically coerce.
 
 =head2 dir
+
+=over 4
+
+=item B<dir> - reader
+
+=back
 
 Required, read-only L<Path::Class::File> object representing the directory
 where this file is stored. Automatically coercing.
 
 =head2 path
 
-Lazy-building, read-only L<Path::Class::File> object representing the file being stored
-under this UUID.
+=over 4
+
+=item B<path> - reader
+
+=item B<has_path> - predicate
+
+=item B<_build_path> - builder
+
+=item B<clear_path> - clearer
+
+=back
+
+Lazy-building, read-only L<Path::Class::File> object representing the file
+being stored under this UUID.
 
 =head2 metadata
 
-Lazy_building, read-write hashref which contains the file's metadata. Setting it with the
-set_metadata method will write the data to disk.
+=over 4
+
+=item B<metadata> - accessor
+
+=item B<has_metadata> - predicate
+
+=item B<_build_metadata> - builder
+
+=item B<clear_metadata> - clearer
+
+=back
+
+Lazy_building, read-write hashref which contains the file's metadata. Setting
+it with the writer method will write the data to disk, modifying the
+hashref directly will not.
 
 =head2 _meta_file
+
+=over 4
+
+=item B<_meta_file> - reader
+
+=item B<_has_meta_file> - predicate
+
+=item B<_build__meta_file> - builder
+
+=item B<clear__meta_file> - clearer
+
+=back
 
 Lazy-building, read-only L<Path::Class::File> object pointing at the meta file.
 
 =head1 METHODS
 
+=head2 new
+
+=over 4
+
+=item B<arguments:> C<\%arguments>
+
+=item B<return value:> C<$object_instance>
+
+=back
+
+Constructor.
+
 =head2 write_metadata
+
+=over 4
+
+=item B<arguments:> none
+
+=item B<return value:> none
+
+=back
 
 Write the contents of C<metadata> to the metadata file.
 
 =head2 remove
 
+=over 4
+
+=item B<arguments:> none
+
+=item B<return value:> C<$bool_success>
+
+=back
+
 Removes the file and metadata file from the store. Returns true if both are
-removed successfully.
+removed successfully. An exception will be thrown if there is an error deleting
+the files.
 
 =head2 exists
+
+=over 4
+
+=item B<arguments:> none
+
+=item B<return value:> C<$bool>
+
+=back
 
 Checks for existence of both the file and the metadata file. Returns true only
 if both exist.
