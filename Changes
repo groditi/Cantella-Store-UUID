@@ -1,3 +1,5 @@
+0.002001 2010-01-16
+ - Updated tests to use Directory::Scratch rather than messing with FindBin
 0.002000
  - INCOMPATIBLE CHANGE: renamed 'set_metadata' to 'metadata'
  - Added grep_files and map_files methods (were blocked by Path::Class bug)

@@ -3,32 +3,19 @@
 use strict;
 use warnings;
 
-use FindBin '$Bin';
-use Test::More;
+use Test::More tests => 15;
 use Test::Exception;
+use Directory::Scratch;
 
 use Data::GUID;
 use Path::Class qw(file dir);
 use Cantella::Store::UUID;
 
-my $tmp = dir($Bin)->subdir('var')->subdir('docroot-test');
-if( -e $tmp){
-  plan tests => 17;
-  ok($tmp->rmtree, "setting up environment $!");
-} else {
-  plan tests => 17;
-}
-
-ok($tmp->mkpath, "setting up environment $!");
-my $test_file = $tmp->file('test1.txt');
-lives_ok {
-  if(my $fh = $test_file->openw){
-    print $fh 'This is test file 1';
-  }
-} 'creating test file';
+my $scratch_dir = Directory::Scratch->new;
+my $test_file = $scratch_dir->touch('test1.txt', 'This is test file 1');
+my $root_dir = $scratch_dir->base->subdir('docroot');
 
 my $dr;
-my $root_dir = $tmp->subdir('docroot');
 lives_ok {
   $dr = Cantella::Store::UUID->new(
     root_dir => $root_dir,
@@ -75,5 +62,5 @@ ok(! -e $check_file->path, 'file gone');
 ok(! -e $check_file->_meta_file, 'meta file gone');
 ok(  -e $test_file, 'test file not gone');
 
-ok($tmp->rmtree, 'cleanup correctly');
+ok($scratch_dir->cleanup, 'cleanup correctly');
 

@@ -18,9 +18,9 @@ requires 'MooseX::Types::Path::Class';
 requires 'MooseX::Types::Data::GUID';
 
 #tests
-test_requires 'FindBin';
 test_requires 'Test::More';
 test_requires 'Test::Exception';
+test_requires 'Directory::Scratch';
 
 resources(
   'license', => 'http://dev.perl.org/licenses/',

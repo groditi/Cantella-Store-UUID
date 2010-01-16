@@ -10,7 +10,7 @@ use MooseX::Types::Path::Class qw/Dir/;
 
 use namespace::autoclean;
 
-our $VERSION = '0.002000';
+our $VERSION = '0.002001';
 
 has nest_levels => (
   is => 'ro',
@@ -241,7 +241,7 @@ Defaults to L<Cantella::Store::UUID::File>.
 
 Constructor.
 
-=head2 from_uuid $uuid
+=head2 from_uuid
 
 =over 4
 
@@ -353,7 +353,7 @@ Guillermo Roditi (groditi) E<lt>groditi@cpan.orgE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-This software is copyright (c) 2009 by Guillermo Roditi.
+This software is copyright (c) 2009, 2010 by Guillermo Roditi.
 
 This is free software; you can redistribute it and/or modify it under
 the same terms as the Perl 5 programming language system itself.

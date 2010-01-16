@@ -95,7 +95,7 @@ To make file location deterministic, files are stored under only their UUID,
 along with their respective meta file which is named C<$UUID.meta> eg
 (C<DD5EB40A-164B-11DE-9893-5FA9AE3835A0.meta>). The meta files may contain any
 number of attributes relevant to the file such as original name, extension,
-MIME typ, etc. Meta files are stored in JSON format.
+MIME type, etc. Meta files are stored in JSON format.
 
 =head1 ATTRIBUTES
 
@@ -238,7 +238,7 @@ Guillermo Roditi (groditi) E<lt>groditi@cpan.orgE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-This software is copyright (c) 2009 by Guillermo Roditi.
+This software is copyright (c) 2009, 2010 by Guillermo Roditi.
 
 This is free software; you can redistribute it and/or modify it under
 the same terms as the Perl 5 programming language system itself.
