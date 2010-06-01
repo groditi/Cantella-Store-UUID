@@ -1,6 +1,6 @@
 use strict;
 use warnings;
-use inc::Module::Install 0.91;
+use inc::Module::Install 0.92;
 
 name 'Cantella-Store-UUID';
 license 'perl';
@@ -13,11 +13,13 @@ requires 'File::Copy';
 requires 'Data::GUID';
 requires 'Path::Class' => '0.18';
 requires 'Sub::Exporter';
-requires 'namespace::autoclean';
-requires 'MooseX::Types::Path::Class';
-requires 'MooseX::Types::Data::GUID';
+requires 'File::MimeInfo' => '0.15';
+requires 'namespace::autoclean' => '0.09';
+requires 'MooseX::Types::Path::Class' => '0.05';
+requires 'MooseX::Types::Data::GUID' => '0.001000';
 
 #tests
+test_requires 'Dir::Self';
 test_requires 'Test::More';
 test_requires 'Test::Exception';
 test_requires 'Directory::Scratch';

@@ -3,6 +3,7 @@ package Cantella::Store::UUID::File;
 use Moose;
 use JSON ();
 
+use File::MimeInfo::Magic ();
 use MooseX::Types::Data::GUID qw/GUID/;
 use MooseX::Types::Path::Class qw/Dir File/;
 
@@ -17,10 +18,17 @@ has path => (is => 'ro', isa => File, coerce => 1, lazy_build => 1);
 has _meta_file => (is => 'ro', isa => File, coerce => 1, lazy_build => 1);
 
 has metadata => (
+  traits => ['Hash'],
   is => 'rw',
   isa => 'HashRef',
   lazy_build => 1,
   trigger => sub { shift->write_metadata },
+  handles => {
+    'get_property' => 'get',
+    'set_property' => 'set',
+    'has_property' => 'exists',
+    'clear_property', => 'delete',
+  },
 );
 
 sub _build_path {
@@ -79,6 +87,32 @@ sub exists {
   return -e $self->path and -e $self->_meta_file;
 }
 
+sub extension {
+  my $self = shift;
+  if( my $type = $self->mime_type ){
+    if( my $ext = File::MimeInfo::extensions( $type ) ){
+      return $ext;
+    }
+  }
+  if( $self->has_property('original_name') ){
+    if( $self->get_property('original_name') =~ /\.(\w+)$/){
+      return $1;
+    }
+  }
+  return '';
+}
+
+sub mime_type {
+  my $self = shift;
+  return $self->get_property('mime-type') if $self->has_property('mime-type');
+  if( my $type = File::MimeInfo::Magic::mimetype( $self->path->stringify ) ){
+    $self->set_property('mime-type', $type);
+    $self->write_metadata;
+    return $type;
+  }
+  return;
+}
+
 __PACKAGE__->meta->make_immutable;
 
 1;
@@ -94,8 +128,8 @@ Cantella::Store::UUID::File - File represented by a UUID
 To make file location deterministic, files are stored under only their UUID,
 along with their respective meta file which is named C<$UUID.meta> eg
 (C<DD5EB40A-164B-11DE-9893-5FA9AE3835A0.meta>). The meta files may contain any
-number of attributes relevant to the file such as original name, extension,
-MIME type, etc. Meta files are stored in JSON format.
+number of key/value pairs relevant to the file such as the original file name,
+extension, MIME type, etc. Meta files are stored in JSON format.
 
 =head1 ATTRIBUTES
 
@@ -153,11 +187,19 @@ being stored under this UUID.
 
 =item B<clear_metadata> - clearer
 
+=item B<has_property> - key predicate
+
+=item B<set_property> - key writer
+
+=item B<get_property> - key reader
+
+=item B<clear_property> - key clearer
+
 =back
 
 Lazy_building, read-write hashref which contains the file's metadata. Setting
 it with the writer method will write the data to disk, modifying the
-hashref directly will not.
+hashref directly, or via the key writer, will not.
 
 =head2 _meta_file
 
@@ -227,6 +269,37 @@ the files.
 
 Checks for existence of both the file and the metadata file. Returns true only
 if both exist.
+
+=head2 mime_type
+
+=over 4
+
+=item B<arguments:> none
+
+=item B<return value:> C<$mime_type>
+
+=back
+
+Will return the mime-type for the file. If there is a value for the 'mime-type'
+property, that value will be used. If the key isn't present, L<File::MimeInfo>
+will be used to find the mime-type of the file and store in the meta file.
+
+If no mime-type can be determined, undef will be returned in scalr context and
+an empty list in list context.
+
+=head2 extension
+
+=over 4
+
+=item B<arguments:> none
+
+=item B<return value:> C<$extension>
+
+=back
+
+Will return an appropriate extension for a file, by using it's mime-type, or
+original file name if mime-type is unavailable. If no known extension is known
+it returns an empty string.
 
 =head1 SEE ALSO
 

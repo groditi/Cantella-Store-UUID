@@ -2,6 +2,7 @@ package Cantella::Store::UUID;
 
 use Moose;
 use Try::Tiny;
+use Class::MOP;
 use Data::GUID;
 use File::Copy qw();
 use Path::Class qw();
@@ -10,7 +11,8 @@ use MooseX::Types::Path::Class qw/Dir/;
 
 use namespace::autoclean;
 
-our $VERSION = '0.002001';
+our $VERSION = '0.003001';
+$VERSION = eval $VERSION;
 
 has nest_levels => (
   is => 'ro',
